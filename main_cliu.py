@@ -6,7 +6,9 @@ import torchvision
 import torchvision.transforms as transforms
 import torch.optim as optim
 from models_cliu import *
+from models import *
 from utils import progress_bar
+import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser(description='Pytorch CIFAR10 Training - cliu implementation')
 parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
@@ -43,21 +45,26 @@ testloader = torch.utils.data.DataLoader(
 classes = ('plane', 'car', 'bird', 'cat', 'deer',
            'dog', 'frog', 'horse', 'ship', 'truck')
 
-net = LeNetReimpl()
+#net = LeNetReimpl()
+net = VGG_reimpl(vgg_name='VGG11')
+#net = VGG(vgg_name='VGG19')
+
 net = net.to(device)
+pytorch_total_params = sum(p.numel() for p in net.parameters())
+print('Number of Parameters: ' + str(pytorch_total_params))
 
 if args.resume:
     # Load checkpoint.
     print('==> Resuming from checkpoint..')
     assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
-    checkpoint = torch.load('./checkpoint/ckpt_lenet_reimpl.pth')
+    checkpoint = torch.load('./checkpoint/ckpt_vgg_reimpl.pth')
     net.load_state_dict(checkpoint['net'])
     best_acc = checkpoint['acc']
     start_epoch = checkpoint['epoch']
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=args.lr)
-scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
+scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=50)
 
 
 # Training
@@ -84,6 +91,7 @@ def train(epoch):
 
 # test/eval
 def test(epoch):
+    net.eval()
     global best_acc
     net.eval()
     test_loss = 0
@@ -114,10 +122,15 @@ def test(epoch):
         }
         if not os.path.isdir('checkpoint'):
             os.mkdir('checkpoint')
-        torch.save(state, './checkpoint/ckpt_lenet_reimpl.pth')
+        torch.save(state, './checkpoint/ckpt_vgg_reimpl.pth')
         best_acc = acc
 
-for epoch in range(start_epoch, start_epoch+200):
+lrs = []
+for epoch in range(start_epoch, start_epoch+300):
     train(epoch)
     test(epoch)
     scheduler.step()
+    lrs.append(optimizer.param_groups[0]["lr"])
+
+plt.plot(lrs)
+plt.savefig('./checkpoint/lr_scheduler.png')
