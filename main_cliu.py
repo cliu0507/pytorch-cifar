@@ -46,8 +46,10 @@ classes = ('plane', 'car', 'bird', 'cat', 'deer',
            'dog', 'frog', 'horse', 'ship', 'truck')
 
 #net = LeNetReimpl()
-net = VGG_reimpl(vgg_name='VGG11')
+#net = VGG_reimpl(vgg_name='VGG11')
 #net = VGG(vgg_name='VGG19')
+#net = GoogleNetReimpl()
+net = ResNet50Reimpl()
 
 net = net.to(device)
 pytorch_total_params = sum(p.numel() for p in net.parameters())
